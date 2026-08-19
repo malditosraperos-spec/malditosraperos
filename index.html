@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>La Biblioteca</title>
+  <style>
+    :root {
+      --bg-color: #0b0c10;
+      --card-bg: #1f2833;
+      --accent-color: #66fcf1;
+      --accent-hover: #45f3e5;
+      --text-color: #c5c6c7;
+      --text-title: #ffffff;
+      --text-muted: #858585;
+      --border-radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #0b0c10 0%, #111827 100%);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    
+    .home-card {
+      width: 100%;
+      max-width: 850px;
+      background: rgba(31, 40, 51, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    h1 { color: var(--text-title); font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 14px; }
+    .subtitle { color: var(--text-muted); margin-bottom: 30px; }
+
+    .nav-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .nav-card {
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      color: var(--text-title);
+      transition: var(--transition);
+      display: block;
+    }
+
+    .nav-card:hover {
+      transform: translateY(-5px);
+      background: rgba(102, 252, 241, 0.1);
+      border-color: var(--accent-color);
+    }
+
+    .nav-card h2 { margin-bottom: 10px; color: var(--accent-color); }
+
+    .brand-logo { width: 120px; height: 120px; border-radius: 50%; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <main class="home-card">
+    <img src="img/biblioteca_icono.jpg" alt="Logo" class="brand-logo">
+    <h1>Malditos Raperos</h1>
+    <p class="subtitle">Selecciona tu destino:</p>
+
+    <section class="nav-links">
+      <a class="nav-card" href="biblioteca.html">
+        <h2>La Biblioteca</h2>
+        <p>Explora lanzamientos de rap y R&B.</p>
+      </a>
+
+      <a class="nav-card" href="indexHR.html"> <!-- Asegúrate de que el nombre coincida -->
+        <h2>La Radio</h2>
+        <p>Escucha música sin parar.</p>
+      </a>
+
+      <a class="nav-card" href="videos.html">
+        <h2>Canal de Vídeos</h2>
+        <p>Visualiza el contenido de nuestro canal de YouTube.</p>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

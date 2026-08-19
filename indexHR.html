@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - Ultimate Hip-Hop Hub v1.1 - </title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg: #0a0a0a; --gold: #ffd700; --red: #ff4500; --pink: #f06292; --gray: #888; --green: #2ecc71; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; transition: 0.5s; overflow-x: hidden; position: relative; }
+        
+        #menu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 95%; max-width: 1000px; padding: 20px; margin: auto; padding-bottom: 60px; }
+        .card { background: #151515; border: 1px solid #333; border-radius: 12px; padding: 25px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); background: #222; }
+        .card i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+        .card h3 { margin: 10px 0 5px 0; font-size: 1.1rem; }
+
+        #player { display: none; width: 90%; max-width: 400px; background: #000; padding: 25px; border-radius: 20px; border: 2px solid #333; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .btn-back { position: absolute; top: -45px; left: 0; background: #222; border: 1px solid #444; color: #fff; cursor: pointer; padding: 8px 15px; border-radius: 5px; font-size: 0.8rem; }
+        
+        .cover-box { width: 100%; aspect-ratio: 1/1; background: #111; margin-bottom: 15px; border-radius: 10px; overflow: hidden; }
+        #cover { width: 100%; height: 100%; object-fit: cover; }
+        
+        .progress-container { width: 100%; margin-bottom: 20px; }
+        #seek-bar { width: 100%; cursor: pointer; accent-color: white; height: 5px; }
+
+        .info { text-align: center; margin-bottom: 20px; min-height: 50px; }
+        #title { font-weight: bold; font-size: 1rem; display: block; margin-bottom: 5px; color: #fff; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #album { font-size: 0.8rem; color: #666; display: block; margin-bottom: 10px; }
+        .know-now { font-size: 0.7rem; color: rgba(255,255,255,0.6); font-style: italic; letter-spacing: 1px; }
+
+        .controls { display: flex; justify-content: space-around; gap: 10px; align-items: center; }
+        .controls button { background: #1a1a1a; border: 1px solid #333; color: white; padding: 15px; border-radius: 50%; cursor: pointer; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; }
+        .btn-play { width: 75px !important; height: 75px !important; background: #333 !important; font-size: 1.5rem; }
+
+        .vol-container { margin-top: 25px; display: flex; align-items: center; gap: 10px; color: #666; font-size: 0.8rem; }
+        #vol { flex: 1; accent-color: #555; cursor: pointer; }
+
+        .watermark { position: fixed; bottom: 15px; right: 20px; font-size: 0.65rem; color: rgba(255,255,255,0.2); letter-spacing: 2px; text-transform: uppercase; pointer-events: none; }
+
+        .theme-strictly { border-color: var(--red) !important; }
+        .theme-mixtapes { border-color: var(--gold) !important; }
+        .theme-rnb { border-color: var(--pink) !important; }
+        .theme-dancehall { border-color: var(--green) !important; }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 768px) { #menu { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) { #menu { grid-template-columns: 1fr; } #player { max-width: 300px; } }
+
+        /* Estilos para el listado de álbumes */
+/* Panel de álbumes Robusto */
+#album-list-overlay {
+   position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 9999;
+    display: none;
+    /* Centrado total */
+    align-items: center; 
+    justify-content: center;
+    padding: 20px; /* Margen de seguridad para que no toque los bordes del navegador */
+}
+
+.album-container {
+   background: #151515;
+    width: 100%;
+    max-width: 550px;
+    /* Ajustamos la altura para que no sea excesiva en pantallas pequeñas */
+    max-height: 90vh; 
+    border-radius: 15px; /* Esquinas redondeadas en todos los lados */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #333;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+}
+
+.album-grid {
+   display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); 
+    gap: 15px;
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Suavizamos el scroll en iOS */
+    -webkit-overflow-scrolling: touch;
+}
+
+.album-item {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    text-align: center;
+}
+
+.album-item img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #222;
+    transition: 0.2s;
+}
+
+.album-item:hover img { border-color: var(--gold); transform: scale(1.02); }
+
+.album-name {
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    /* Truncado estricto */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .album-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .album-container { max-height: 85vh; }
+}
+    </style>
+</head>
+<body>
+
+    <div id="menu">
+        <div class="card" onclick="start('strictly')" style="border-bottom: 5px solid var(--red)">
+            <i class="fas fa-record-vinyl" style="color:var(--red)"></i>
+            <h3>STRICTLY RAP</h3><small>Albums & Mixtapes</small>
+        </div>
+        <div class="card" onclick="start('beats')" style="border-bottom: 5px solid var(--gray)">
+            <i class="fas fa-drum" style="color:var(--gray)"></i>
+            <h3>BEATS RADIO</h3><small>Instrumentals</small>
+        </div>
+        <div class="card" onclick="start('mixtapes')" style="border-bottom: 5px solid var(--gold)">
+            <i class="fas fa-compact-disc" style="color:var(--gold)"></i>
+            <h3>ALL DAY RAPPIN</h3><small>Dat Piff Classics</small>
+        </div>
+        <div class="card" onclick="start('rnb')" style="border-bottom: 5px solid var(--pink)">
+            <i class="fas fa-heart" style="color:var(--pink)"></i>
+            <h3>R&B SOUL</h3><small>Smooth Vibes</small>
+        </div>
+        <div class="card" onclick="start('tapes')" style="border-bottom: 5px solid #fff">
+            <i class="fas fa-tape" style="color:#fff"></i>
+            <h3>RAP TAPES ES</h3><small>Rap en español</small>
+        </div>
+        <div class="card" onclick="start('dancehall')" style="border-bottom: 5px solid var(--green)">
+            <i class="fas fa-fire" style="color:var(--green)"></i>
+            <h3>DANCEHALL</h3><small>Jamaican Roots</small>
+        </div>
+    </div>
+
+    <div id="player">
+        <button class="btn-back" onclick="location.reload()"><i class="fas fa-arrow-left"></i> MENÚ</button>
+        <div class="cover-box"><img id="cover" src="" alt=""></div>
+        <div class="progress-container"><input type="range" id="seek-bar" value="0" min="0" step="1"></div>
+        <div class="info">
+            <span id="title">CONECTANDO...</span>
+            <span id="album">...</span>
+        </div>
+        <div class="controls">
+            <button onclick="playPrev()"><i class="fas fa-step-backward"></i></button>
+            <button class="btn-play" onclick="toggle()"><i id="p-icon" class="fas fa-play"></i></button>
+            <button onclick="playNext()"><i class="fas fa-step-forward"></i></button>
+        </div>
+        <div class="vol-container">
+            <i class="fas fa-volume-down"></i>
+            <input type="range" id="vol" min="0" max="1" step="0.05" value="0.7">
+            <i class="fas fa-volume-up"></i>
+        </div>
+        <div style="text-align: center;font-size: 2.2em;">
+    <button class="btn-open-list" onclick="toggleAlbumList()"><i class="fas fa-list"></i> EXPLORAR ALBUMS</button>
+</div>
+        <div style="text-align: right;opacity: 0.3; margin-top: 10px;">
+            <span class="know-now">and if you dont know, now you know</span>
+        </div>
+    </div>
+
+    <div class="watermark">developed by jvd</div>
+
+    <audio id="audio" preload="auto" crossorigin="anonymous" importance="high"></audio>
+
+    <script>
+        let albumQueue = []; 
+let isAlbumMode = false;
+        const audio = document.getElementById('audio');
+        const pIcon = document.getElementById('p-icon');
+        const seekBar = document.getElementById('seek-bar');
+        
+        let currentMode = '';
+        let history = [];
+        let historyIndex = -1;
+        let recentlyPlayed = new Set();
+        let nextTrackBuffer = null;
+        const MAX_RECENT = 20;
+
+       let DB = {}; // Ahora es let y empieza vacío
+const GITHUB_DB_URL = "https://raw.githubusercontent.com/jesusviruez/hubradio/refs/heads/v1.1/db.json";
+
+      async function loadExternalDB() {
+    try {
+        // Añadimos ?t= + la hora actual para saltar el caché
+        const response = await fetch(GITHUB_DB_URL + "?t=" + new Date().getTime());
+        if (!response.ok) throw new Error("No se pudo cargar la DB");
+        DB = await response.json();
+        console.log("Base de datos actualizada desde GitHub");
+    } catch (e) {
+       console.error("Error cargando DB externa, usando backup local");
+        // Opcional: Aquí podrías pegar tu DB actual como respaldo
+        DB = {  strictly: ['let-god-sort-em-out_20251130', 'the-formula', 'indie-500', 'roc-marciano-the-alchemist-the-elephant-mans-bones-pimpire-edition','roc-marciano-mt.-marci','cookin-soul-larry-june-orange-season-deluxe-edition','cookin-soul-raz-fresco-bakin-soul','cookin-soul-whateva-vol.-3','cookin-soul-whateva-vol.-4','cookin-soul-remix-anthology-vol.-3','currensy-verde-terrace','curreny-stoned-on-ocean','curreny-trauma-tone-highway-600','mf-doom-czarface-czarface-meets-metal-face','mf-doom-mf-grimm-special-herbs-spices-vol.-1','mf-doom-operation-doomsday_202511','boldy-james-nicholas-craven-criminally-attached','boldy-james-harry-fraud-the-bricktionary','boldy-james-cuns-be-that-as-it-may','boldy-james-conductor-williams-across-the-tracks','ghostface-killah-the-brown-tape','ghostface-killah-big-ghost-ltd-the-lost-tapes','ghostface-killah-apollo-brown-twelve-reasons-to-die-the-brown-tape','ghostface-killah-ironman','Nicholas-Craven-Craven2','Noname-Sundial','GhostfaceKillah-SupremeClientele2','ghostface-killah-supreme-clientele','RocMarcianoMarciology','machhommyprayforhaiti_202411','Larry_June_-_Out_The_Trunk-2019','2000-joey-badass','the-blueprint-3','album_The_Beatles_vs_Jay-Z_The_Grey_Album', 'food-liquor', 'Jay-Z_and_Wu-Tang_Clan_-_Brooklyn_Zoo_The_Legend_Of_Iceberg_Slim-2017','finding-forever','genesis_20251029','da-real-world','under-construction_202507','crime-pays','the-infamous-mobb-deep_202409','the-king-i','new-amerykah-pt.-1-4th-world-war','todd-smith_202408','servants-in-heaven-kings-in-hell','mudface_202406','the-g-files','return-of-the-mac','blood-moon-year-of-the-wolf','doctors-advocate_202406','the-beast-is-g-unit','the-blue-carpet-treatment','malice-n-wonderland','jealous-ones-still-envy-j.o.s.e.-2','brooklyns-don-diva','universal-mind-control','til-the-casket-drops_202404','red-gone-wild-thee-album','eardrum_202404','release-therapy','Doggumentary','COOLAID','man-plans-god-laughs','firewater_2006-01-24','no-love-lost','the-big-doe-rehab', 'wu-tang-forever_202511', 'bow-down', 'timbaland-presents-shock-value','tha-carter-iii_202511', 'atliens_202511', 'death-row-greatest-hits_202511', 'the-marshall-mathers-lp_202511', 'the-don-killuminati-the-7-day-theory_202511', 'stankonia_202511', 'greatest-hits_202511','r-u-still-down-remember-me', 'b4-da-money-cover', 'gods-plan-g-unit', 'guess-whos-back-50-cent', 'redman-slappers-mixtape','noise-kandy-3', 'docs-da-name-2000-redman', 'd12-world-by-d12', 'tical-method-man', 'liquid-swords-gza-wu-tang', 'whut-thee-album-redman', 'dare-iz-a-darkside_202603', 'the-great-escape_202603','cabin-in-the-sky_202603', 'the-love-movement_202603', '3-feet-high-and-rising_202603', 'e-1999-eternal_202603','marciology', 'kids-see-ghosts_202602', 'chemistry-buckshot', 'uptown-saturday-night', 'Lupe_FIasco_-_Pharaoh_Height-2015', 'Jean_Grae_-_Cookies_Or_Comas_Hosted_By_DJ_Drama-2011', 'true-magic','earl-the-pearl', 'peace-fly-god', 'noise-kandy-4', 'heels-have-eyes', 'tana-talk-3', 'JAY-Z_AMERICAN_HUSTLER_REMIX', 'Ritchcraft_Presents_Jay-Z_-_The_Big_Band_Blueprint-2010', 'jay-zeezer','Outlawz_-_Killuminati_2K11_Hosted_By_DJ_Smallz_and_DJ_Kay_Slay-2011', 'Andre_3000_-_3_Stacks-2010', 'DJ_Delz_Presents_Biggie_Smalls_is_The_illest-MF-', 'Snoop_Dogg_-_Unreleased-2015', 'Lil_Kim_-_Lil_Kim_Season-2016', 'Nipsey_Hussle_-_Crenshaws_Finest-2015', 'death-row-unreleased-hits-vol.1', 'snoop-doggy-dogg-_-doggystyle-2-unreleased-album_202501','Snow_Tha_Product_-_The_Rest_Comes_Later-2015', 'G-Unit_-_Automatic_Gunfire_2003', 'Bone_Thugs-N-Harmony_-_Midwest_Warriors_2008', 'flygod-is-an-awesome-god', 'one-day-itll-all-make-sense', 'graduation_202501', 'return-to-the-36-chambers', 'wu-tang-caln-wu-chronicles-vol-2-full-album', 'DJ_Delz_and_Lil_Cease_Presents_-_Junior_Mafia_The_Lost_Files-2009','method-man-cappadonna-lemon-haze-full-album', 'Common_and_J_Dilla_-_From_The_Soul-2019', 'Raekwon-Cuban_Revolution-2009','idlewild_202506', 'nys-finest', 'missy-elliott-supa-dupa-fly_202509', 'DJ_Premier_and_2Pac_-_Thug_Stylesss-2017', 'Jay-Z_and_DJ_Invasion_-_The_Lost_Blend_Sessions-2019','Bizarre_Tribe_-_A_Quest_to_The_Pharcyde-2012', 'alfredo-by-freddie-gibbs-and-the-alchemist', 'everybody-cant-go-benny-the-butcher', 'gs_the-pharcyde-labcabincalifornia-30th-anniversary-edition', 'gs_nwa-straight-outta-compton-2002-digital-remaster','01.-westside-gunn-400-million-plus-tax', 'Raekwon_-_Picasso_2-2014', 'gurujazzmatazz_202101','stakes-is-high', 'mecca-the-soul-brother', 'below-the-heavens', 'live-laugh-love_202602','lonely-at-the-top', 'nas-the-lost-tapes_202603', 'samurai-lupe', 'doggystyle-snoop-dogg','madliblegend', 'Joey_Badass_-_Rejex', 'joey-badass-all-amerikkkan-badass', 'little-simz-no-thank-you','little-simz-sometimes-i-might-be-introvert', 'Doechii-Tiny-Desk-Audio-01', '2pac_-_Tupac_Duets','the-dynasty-roc-la-familia', 'tha-carter_202511','ego-trippin', 'the-solution_202407', 'the-wonder-years', 'h.f.m.-2-hunger-for-more-2', 'beg-for-mercy_202602', '50-cent-power-of-the-dollar_202512','buck-the-world-street-edition-2025-unofficial', 'el-nino_202601','return-of-the-devils-son', 'Ghostface_Killah_and_DJ_Premier_-_Duel_of_the_Iron_Fists_EP-2012', 'Raekwon_-_Cocainism_Vol_2-2010', 'the-war-report-2-report-the-war', 'chamber-music','nate-dogg-g-funk-classics-vol.-1-2', 'we-got-it-4-cheap-volume-2-clipse', 'the-roots-phrenology_202512', 'still-i-rise_202511', '2001_20251115', 'busta-rhymes-anarchy-2000', 'who-made-the-sunshine','curtis_202511', 'the-grind-date-20th_anniversary_edition','raekwon-the-emperors-new-clothes', 'Royce_Da_59_-_Trust_The_Shooter_EP-2016','haitian-body-odor-mach-hommy', 'dump-gawd-shot-clock-king-3', 'tha-wolf-on-wall-street', 'mach-hommy-tha-god-fahim-notorious-dump-legends', 'machs-hard-lemonade_202404', 'Gangsta_Boo_-_Candy__Diamonds_and_Pills-2015', 'Boldy_James_and_The_Alchemist_-_Super_Tecmo_Bowl-2021', 'Remy_Ma_-_Im_Around-2014','Blac_Youngsta_-_Fuck_Everybody-2016', 'Kevin_Gates_-_Truth_Be_Told-2017', 'Juicy_J_-_Must_Be_Nice-2016', 'Slim_Thug_-_Thug_Thursday_2-2014', 'Snow_Tha_Product_-_Good_Nights_and_Bad_Mornings-2012','tha-last-meal_20260305', 'warren-g-regulate...g-funk-era-20th-anniversary', 'mac-devin-go-to-high-school', 'romestreetzbigghostltdwasntbuiltinaday', 'gpericodjdramahotshot', 'monroeflowdvmetheplayersretreat', 'absoulherbert', 'romestreetzkissthering','isaiahrashadmusic4rdavibers', 'wizkhalifacardosledgrenwizgotwings', 'larryjunecruiseusa', 'larryjunetheportofsanfrancisco', 'showbiz_202602', 'DJ_Critical_Hype_and_DJ_Clyde_Present_Chance_The_Rapper_and_Kanye_West_-_Chance_', 'fair-exchange-no-robbery',
+            'boldy-james-harry-fraud-the-bricktionary', 'no-mercy-no-fear-g-unit', 'mj-muggs-vs-gza-_-grandmasters-remix-album', 'jayworthydjmuggswhattheyhittin4', 'jayrockredemption', 'larryjunecardomrmidnight',
+            'skubasada2.5disc1', 'gperico2thaleft', 'bernerlarryjunecooksandorangejuice', 'westsideboogiemoreblacksuperheroes',
+            'payrollandcardoanotherdayanotherdollar', 'estgee_mad', 'allblackborntoscore', 'allstarjrorganizedcrime2', 'rushjaynicefamili4',
+            'gpericonoloveinla', 'alstarjrorganizedcrime', 'lndndrgsaffiliated', 'payrollgiovannicardobigbossinvol1', 'payrollgiovannicardobigbossinvol2', 'jay-worthy-madeintyo-time-after-time', 'jayworthyharryfraudeatwhenyourhungrysleepwhenyoudie',
+            'bl_ck-b_st_rds-subverse', 'david-begun-mf-doom-flying-lotus-flylodoom', 'vaudeville-villain_202602', 'mf-doom-mm..food-20th-anniversary-edition-2024-320', 'j-dilla_the-shining', 'currensy-collection-agency',
+            'Currensy_-_Cathedral', 'Currensy_-_Saturday_Night_Car_Tunes', 'Chance_The_Rapper_-_10Day_Official_Final',
+            'Trae_Tha_Truth_-_Another_48_Hours-2016', 'DJ_Semi_And_The_Notorious_B.I.G.-Ready_To_Die_The_O.G._Edition-Bootleg-2008-',
+            'Nipsey_Hussle_-_Bullets_Aint_Got_No_Names_Vol3', 'Redman_-_Muddy_Waters_2-2014', 'Master_P_-_Middle_Finga-2016',
+            'DJ_Kurupt_Presents_Foxy_Brown-Fire_Foxy_Hits-Bootleg-2007-3AM', 'B_Real_and_Berner_-_Prohibition-2014',
+            'Action_Bronson_and_Party_Supplies_-_Blue_Chips_2-2013', 'Redman_-_Funk_From_Hell-2010', 'Action_Bronson_and_The_Alchemist_-_Rare_Chandeliers-2012', 'Action_Bronson_-_Blue_Chips-2012',
+            'Action_Bronson-Bronsolini', 'Nipsey_Hussle_-_The_Marathon_Continues-2011', 'Lloyd_Banks_-_Halloween_Havoc_2-2015',
+            '2Pac_-_Friko_Blend_Tape-2018', 'Lloyd_Banks_-_Halloween_Havoc_3-2016', '50_Cent_-_5_Murder_By_Numbers-2012',
+            'Lloyd_Banks_-V5-2009', 'Mobb_Deep_-_Infamous_Minded_Free_P-2010', 'Nas_and_RZA_-_Severe_Punishment_The_Lost_Chamber-2015',
+            'L.A.D_aka_LA_The_Darkman_-_Wu_La_Familia-2020', 'Consequence_-_Movies_On_Demand_2-2011', 'Havoc-From_Now_On-2009',
+            'gs_2pac-2pacalypse-now', 'gs_gravediggaz-6-feet-deep', 'magic-alive_202601', 'magic-nas', 'in-my-lifetime-vol-1',
+            'the-minstrel-show', 'reasonable-doubt_202603', 'i-heard-its-a-mess-there-too', 'westside-gunn-10',
+        'the-plugs-i-met-2', 'pompeii-utility', 'nehruviandoom', 'burning-desire-mike', 'more-fish_202604', 'like-water-for-chocolate_202604',
+        'kings-disease', 'wwcd-griselda', 'vol-3-life-and-times-of-s.-carter', 'vol.2-hard-knock-life', 'mac-miller-k.i.d.s._202604',
+        'disco-mike', 'it-was-written_202604', 'ill-bill-the-grimy-awards_202501', 'r.a.-the-rugged-man-all-my-heroes-are-dead_202501',
+        'la-coka-nostra-a-brand-you-can-trust', 'vinnie-paz-god-of-the-serengeti_202501', 'vinnie-paz-season-of-the-assassin_202501',
+        'ill-bill-la-bella-medusa_202501', 'jedi-mind-tricks-violence-begets-violence', 'hitler-wears-hermes-3', 
+        'dump-gawd-hommy-edition', 'mach-hommy-tha-god-fahim-dollar-menu', 'evidence-cats-dogs', 'ka-woeful-studies', 'ka-languish-arts',
+        'roc-marciano-behold-a-dark-horse_202512', 'cookin-soul-mc-melodee-bonafide', 'boldy-james-the-alchemist-bo-jackson',
+        'ghostface-killa-sour-soul', 'the-good-people-good-for-nuthin', 'your-old-droog-yodney-dangerfield_202511', 'Smoke_DZA_-_K.O.N.Y.-2012',
+                'Tory_Lanez_-_Daystar-2020', '13.-wolves', '1.-i-thought-about-killing-you', '21.-last-call_202604', 'lateregestrationkanye',
+                'yeezuskanye2013', 'theblackalbumjayz', 'hiphopisdeadnas', 'readytodiebiggie', 'Be-Common', 'BizarreRide2thePharcyde',
+                'wu-tang-clan-wu-bonus-chamber-vol-2-fullalbum', 'wu-tang-clan-bonus-chamber-vol-1-full-album', 'hip-hop_arc014', 'hip-hop_arc031',
+                'hip-hop_arc015', 'hip-hop_arc072', 'dls_bms', 'de-la-soul-de-la-soul-is-dead', 'death-of-escobar', 'lupe-fiascos-the-cool',
+                'black-hole-superette', 'KoleXXXion', 'a-better-tomorrow_202410', 'miss-e...-so-addictive_202510', 'the-r.e.d-album',
+                'made_20241202', 'Obie_Trice_-_The_Fifth-2019', 'Xzibit__B_Real_and_Demrick_Serial_Killers_-_The_Murder_Show-2015',
+                'the-marshall-mathers-lp_202511', 'compton_202511', 'restless_202602', 'kurupt-tha-streetz-iz-a-mutha', 'the-lady-of-rage-necessary-roughness_202302', 'westside-connection-_-the-best-of', 'snoop-doggy-dogg-tha-doggfather',
+                'dj-quik-_-balance-options', 'stovegodcooksrocmarcianoifthesekitchenwallscouldtalk', 'rushjaynicefamili3',
+        'rushjaynicethegodfahimanalbumcalledclassic', 'rushjayniceflyart', 'jaynicethebestisyettocome', '12-d.-j.-quik-dollars-sense_20251123', 'the-chronic_202603', 'snoop-dogg-life-after-death-row-records_202307', 'epmd-you-had-too-much-to-drink', '14.-snoop-dogg-murder-music-feat.-benny-the-butcher-jadakiss-busta-rhymes', '11-2-pac-can-u-get-away',
+    'the-pain-collector-vinnie-paz', 'hip-hop_arc073', 'hip-hop_arc069', 'something-else_202404', 'lip-lock', 'the-keynote-speaker',
+    'ill-na-na_202602', 'broken-silence_202601', 'hard-core_202602', '17.-hold-on', 'tony-touch-the-piece-maker-clean', 'the-piece-maker-3-return-of-the-50-mcs', '5.-no-sunshine-feat.-scarface', '15.-tha-beehive-feat.-reeks-bunky-s.-a.-vee-saint-from-the-advakids', 'junior-m.a.f.i.a.', 'junior-m.a.f.i.a._202304',
+    'rahzel-make-the-music-2000-1999_202508', 'NonPhixion-TheGreenCd', 'DJ_Lennox_Presents_50_Cent_-_Return_Of_The_Boom_Bap_50_Cent_Blends-2011',
+'Memphis_Bleek_-_Kush_Vol._1-2011', 'Memphis_Bleek_-_The_Movement_2-2014', 'Memphis_Bleek_-_The_Movement-2012', 'Notorious_BIG_-_Night_Of_The_Living_Dead', 'DJ_Drama_and_Freddie_Gibbs_-_Baby_Face_Killa-2012', 'from-me-to-u-juelz', 'diplomatic-immunity-diplomats', 'sick-earl-sweatshirt', 'Wangsap', 'Earl-2-Road-To-Doris', '15-git-up-git-out-dirty-version',
+'Family-Ties-EP', 'faith-is-a-rock-mike-wiki-alchemist', 'revenge-of-the-needs-fahrenheit-115-2-lupe', 'failures-no-option-lloyd-banks',
+'wolf-on-wall-street-2', 'nodega', 'monkey-barz', '10.-sing-about-me-im-dying-of-thirst-songs-lover.com', 'casino-baby-keem', 'topimpabutterfly-kendricklamar', 'gnx-kendricklamar', 'organized-konfusion', 'the-listening', 'lb-cant-win-for-losing-blend-tape',
+'phonte-charity-starts-at-home', '09-method-man', 'theinfamousmobbdeep1995', '36-reasons', 'apollo-kids', 'larry-june-x-sledgren-sock-it-to-me-pt.-2', '04.-brick-fees', 'pi-ata-pd9nln', 'the-alchemistfreddie-gibbs_alfredo2',
+'life-after-death-b.i.g.', 'speakerboxxx_the-love-below', 'totally-krossed-out', 'kris-kross-young-rich-and-dangerous-1996',
+'13-blueprint-momma-loves-me_202604', 'wale-back-to-feature', '30.-logic-sayonara', 'street-hop', 'Unrestricted', 'graduation-kanye-west_202604',
+'nas-illmatic_202604', 'the_st_valentines_day_massacre', 'beg-for-mercy-no-mercy-edition-2025-fan-album', 'animal-ambition-an-untamed-desire-to-win', 'before-i-self-destruct', 'crenshaw_202603', 'Nipsey_Hussle_-_Neighborhood_Nipsey-2012'
+            ],
+            beats: ['j-armz-araab-muzik-how-to-be-an-mc', 'VA-J._Armz-How_To_Be_An_MC_51-Bootleg-2008-C4', 'hip-dozer-hip-dozer-vol.-7',
+            'cookin-soul-jinsang-boa-bunda', 'cookin-soul-tripi-hapa-beats', 'cookin-soul-bonafide-beats', 'cookin-soul-eterno-tumbao-instrumentals', 'cookin-soul-doom-tribute-beats', 'jazz-spastiks-mindmaze-instrumentals', 'jazz-spastiks-scratch-sniff',
+            'jazz-spastiks-12-bit-spit', 'jazz-spastiks-camera-of-sound', 'metal-fingers-special-herbs-vol.-9-0',
+            'metal-fingers-special-herbs-vol.-7-8', 'metal-fingers-special-herbs-vol.-5-6', 'metal-fingers-special-herbs-vol.-3-4',
+            'Telemachus-InThailand', 'DJShadow-PrivatePress', 'kenny-beats-louie',
+            '2006-j-dilla-donuts', 'shades-of-blue', 'NuMoSoul05', 'SoulStarr-inspirationtributeToNujabes',
+            'VA-J._Armz-How_To_Be_An_MC_Vol._55-2008', 'VA-J._Armz-How_To_Be_An_MC_Vol._24_Instrumentals-2004', 'VA-J._Armz-How_To_Be_An_MC_Vol._23-Bootleg-2005-C4', 'VA-J._Armz-How_To_Be_An_MC_Vol._20-Bootleg-2004', 'VA-J_Armz_-_How_To_Be_An_MC_56-2009', 'VA-J_Armz-How_To_Be_An_MC_Instrumentals_36-Bootleg-2006', 'VA-J._Armz-How_To_Be_An_Mc_Vol.612009', 'VA-J._Armz-How_To_Be_An_MC_Vol._34-Bootleg-2006-WEBBZ', 'VA-J_Armz_-_How_To_Be_An_MC_90s_Edition_Vol_1-2009', 'VA-J._Armz-How_To_Be_An_Mc-Rnb_Vol._32009', 'VA-J._Armz-How_To_Be_An_MC_Vol._62-Bootleg-2009-Xplode', 'VA-J._Armz-How_To_Be_An_MC_Vol._21-Bootleg-2005', 'VA-J._Armz_-_How_To_Be_An_MC_Vol._79-2016', 'J._Armz_-_How_To_Be_An_MC_Vol_58-2009', 'J._Armz_-_How_To_Be_An_MC_64-2010', 'J_Armz_-_How_To_Be_An_MC_Vol_1_The_Re-Issue_2CD-2009', 'J.ARMZ_HOW_TO_BE_AN_MC_57', 'Don_Cannons_The_Cannon_Hip-Hop_Instrumentals_Anthem_1.0', 'Coast_2_Coast_Instrumentals_Vol._13-2009', 'VA-DJ_Smallz-Smokin_Instrumentals_Vol._5-Bootleg-2008-CR', 'VA-N.Y_C.E.O_and_S.B-Crack_Juice_Instrumentals_Vol.232009', 'VA-Got_Instrumentals_Vol._73-2016', 'VA-Coast_2_Coast_Instrumentals_30-2011', 'VA-DJ_Whiteowl_-_Drop_That_Instrumentals_RandB_Edition-2010', 'Wu-Tang_Clan_Dj_Skwa2_-_Da_Shaolin_Instrumentals', 'VA-DJ_Whiteowl_-_Jackin_For_Beats_Pt._3-2016', 'VA-Coast_2_Coast_Instrumentals_Vol._42-2012', 'currensy-weed-x-instrumentals-2', 'ManuBeats-Mouchette', 'cookin-soul-diggin-stories-vol.-2', 'cookin-soul-lo-bap-beats', 'cookin-soul-marvelous-adventures-vol.-3', 'cookin-soul-marvelous-adventures-vol.-2', 'ookin-soul-lost-tapes', 'cookin-soul-mackaroni-beats', 'cookin-soul-polo-beats', 'cookin-soul-passport-pimpin-instrumentals', 'cookin-soul-tapas-beats-vol.-1', 'cookin-soul-tapas-beats-vol.-2', 'cookin-soul-soul-beach', 'cookin-soul-soulmatic-instrumentals', 'cookin-soul-stream-sessions', 'cookin-soul-wu-xmas-beats',
+                'Best_Of_February_2020_Hip-Hop_Instrumentals-2020', 'Beats_By_Rhettmatic_-_The_Boom_Bap_Collection_2.0-2010',
+                'VA-P-Cutta-Street_Beats_25-Bootleg-2009-Xplode', 'peterockiniinstrumentals', 'Lil_Wayne_The_City_Is_Mine_Instrumentals_2008', 'Coast_2_Coast_Instrumentals_18-2010', 'CurrenSy_-_Weed_and_Instrumentals_3-2018',
+                'Coast_2_Coast_Instrumentals_Vol_22-2011', 'pitch-92-delicacies', 'mike-b-instrumentals-vol.-1',
+                'roc-marciano-pimpstrumentals_202512', 'luke-ob-cosmic-jazz-landed-in-roswell', 'dr.-dre-2001-instrumental', 
+                'Cookin_Soul_Presents_-_Teddy_Pendergrass_Tribute-2010', 'ttc-instrumentals', 'the-food-villain-the-alchemist',
+                'conductor-we-have-a-problem', 'bad-neighbor-beats'],
+            rnb: ['VA-DJ_Triple_Exe-The_Passion_Of_RandB_154', 'in-my-mind-pharrell', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_153', 'VA-DJ_E-Dub_-_GTA_RandB_Online_2-2022', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_152', 'va-dj-knucklez-secret-session-rb-16-throwback-edition-2010', 'va-dj-p-exclusivez-the-climax-rb-sensations-2010', 'va-dj-chuck-t-sexxxplicit-rb-vol.49-bootleg-2009-mixfiend', 'VA-DJ_B-Ski_-_So_Amazin_RandB_14-2021', 'va-dj-finesse-xclusive-rb-6-2009', 'VA-DJ_GxxdMuzic_-_RandB_High_3-2021', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_147', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_148', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_145', 'VA-DJ_B-Ski_-_So_Amazin_RandB_12-2020', 'VA-DJ_B-Ski_-_Exclusive_RandB_16-2020', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_139', 'VA-DJ_B-Ski_-_Exclusive_RandB_15-2020', 'VA-DJ_Koolhand_-_RandB_Renaissance_2-2020', 'VA-DJ_Jay_Rock_-_Blazin_RandB_64-2020', 'VA-DJ_B-Ski_-_Exclusive_RandB_14-2019', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_133_90s', 'VA-DJ_Cortez_and_DJ_Mellz_-_Futuristic_RandB_33-2018', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_129', 'VA-DJ_B-Ski_-_So_Amazin_RandB_10-2019', 'VA-DJ_Hektik_-_Inspired_By_The_Streets_36_RandB_Edition-2018', 'VA-DJ_Smoove_K_-_Moisture_RandB_10-2017', 'VA-DJ_Cortez_and_DJ_S.R._-_Futuristic_RandB_32-2017', 'VA-DJ_Whiteowl_-_RandB_71-2010', 'VA-DJ_Whiteowl_-_Drop_That_RandB_89-2012', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_3', 'VA-DJ_Teknikz_and_DJ_E_Sudd_-_Executive_RandB_Vol._29-2011', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_29', 'VA-DJ_Get-It-Rite_-_Nuvo_RandB_Vol_2.2-2009', 'VA-DJ_Finesse_-_Xclusive_RandB_19.9-2010', 'VA-DJ_Whiteowl_-_RandB_Pt._92-2013', 'VA-DJ_Whiteowl_-_RandB_81-2011', 'VA-DJ_Moe_Sticky_-_RandB_State_Of_Mind_38-2015', 'VA-DJ_Moe_Sticky_-_RandB_State_Of_Mind_36-2015', 'VA-DJ_Whiteowl_-_RandB_86-2012', 'VA-DJ_Finesse-RandB_Soul_Vol._5-Bootleg-2006', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_23', 'VA-DJ_Whiteowl_-_RandB_Pt._101-2014', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_49', 'VA-DJ_Whiteowl_-_Drop_That_RandB_90-2012', 'VA-DJ_Whiteowl_-_Drop_That_RandB_88-2012', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_21', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_22', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_59', 'VA-DJ_Finesse_-_RandB_Soul_Vol.6Bootleg-2006', 'VA-DJ_E-Dub_-_GTA_RandB_Online_2-2022', 'VA-DJ_Triple_Exe-The_Passion_Of_RandB_39', 'VA-Beatsnblends_Presents_-_Hip_Hop_and_RandB_Vol_200-2009', 'VA-DJ_Whiteowl_-_Drop_That_RandB_87-2012', 'DJ_Bijal-Best_Of_Aaliyah_More_Than_A_Woman-MixFiend-2007', 'DJ_Ant-Lo_-_Grown_Folks_RandB_Vol._3-2010', 'Big_Mike_-_RandB_Jumpoff-2011', 'DJ_Storm-RandB_Radio_Pt._6_Desert_Storm_South-2009', 'DJ_2Mello_-_RandB_Royalty_14_Streets_R_Us','VA-DJ_Nephew_and_Jay_Beatz_-_Bedtime_Stories_Vol._8-2023', 'royalty_202406', 'human_202406', 'year-of-the-gentleman_202406', 'cazzu-una-nina-inutil-ep-2020',
+                'as-i-am_202406', 'non-fiction', 'ciara_202405', 'til-the-morning', 'libra-scale', 'woman_202503', 'here_20250112',
+                'fantasy-ride', 'basic-instinct', 'big_20240713', 'hard-ii-love', 'incomparable_202406', 'code-red',
+                'two-eleven', 'faithfully_202511', 'non-fiction', '17-futura-free_20240106', 'indrupendence-day', 'hadows-diamonds_202509',
+                'alright-still_202411', 'all-of-me_202406', 'free-tc', 'VA-DJ_Teknikz_and_DJ_E.Sudd_-_Executive_RandB_33-2012',
+                'love-marriage-divorce', 'unappreciated', 'D.N.A.', 'jaggededge_202504', '21_20250714', 'battlefield_202509', 'jhud_20241225',
+                'the-sellout', 'Teyana_Taylor_-_The_Misunderstanding_Of_Teyana_Taylor', 'woman-to-woman_202406', 'christmas-on-death-row_202511','Tory_Lanez_-_Chixtape_2-2014', 'lauryn-hill-mtv-unplugged-2-0-disc-1', 'lauryn-hill-mtv-unplugged-2-0-disc-2',
+                'l-f-01.-lost-found'],
+            tapes: ['a-lo-cubano-album', 'emigrante-album', 'lil-supa-creole', 'lilsupa-yeyo', 'lil-supa-serio', 'valencias-finest-the-mixtape-mixtape', 'los-pajaros-no-pueden-vivir-en-el-agua-porque-no-son-peces-album', 'maleza-album', '05-c.-tangana-diez-anos-versos-perfectos.com', 'espiritu-de-nuestro-tiempo-cd', 'tiempo-al-tiempo-mixtape', 'con-tierra-en-los-bolsillos-album', 'tu-me-la-shupas-mixtape', '23-me-muevo-con-dios', 'elphomega-ciclo-truly-yours', 'ElphomegaTheF2eelance', 'la-call-en-demo-demo', 'decimoctavo-mixtape', 'chill-trill-ep', '12-bien-guay', '1015mixtapectangana', 'gancho-perfecto-album', 'siempre-cd', 'mi-fortuna', 'a.d.r.o.m.i.c.f.m.s-2-mixtape', 'c.-tangana-antes-de-morirme-feat.-rosalia-video-mp-3-128-k', 'c.-tangana-y-baboon-cakes-www.hhgroups.com', 'supernova-lpgc-mixtape', 'agorazein-planes-audio-oficial-mp-3-70-k', 'after-hour-gran-canaria-mixtape', 'all-black-mixtape', 'd.e.p-maxi', 'elphomega-nebuloso', 'elphomega-phantom-pop', 'elphomega-el-testimonio-libra', 'madrid-zona-bruta-album', 'pirdula-ep', 'sencillo-y-en-silencio-mixtape-recopilatoria', 'la-selva-album', 'tote-king-uno-contra-20-mcs', 'mucho-muchacho-y-cookin-soul-cookin-bananas-2011', 'bejo-cookin-soul-tripi-hapa', 'monaly-gluekids-smooth-dudes-with-the-gangsta-groove', 'rapp-gotti-ontherun-the-lamb-the-tiger', 'rapp-gotti-ontherun-raised-by-the-wolves-deluxe-edition-mugrientos-evangeli', 'rapp-gotti-jay-trama-guaranteed-fresh', 'pablic-s.-pfff', 'pablic-s.-flores', 'pablic-s.-jocbeats-los-cerdos-no-pueden-mirar-al-cielo', 'cookin-soul-kid-frankie-showtime', '9.-agorazein-explicame-audio-oficial', 'MALIGNO001', 'maligno-019', 'MALIGNO002_', 'loves_202105', 'yung-beef-singles-vol7', 'morodo-ozmlstayl', 'tremendovidalogia', 'rapp-gotti-bishop-one-kind-of-blue-album', 'NWiseAllahCasinoChips', 'rapp-gotti-ontherun-hermetica', 'monaly-juice', 'cookin-soul-tapas-vol.-1', 'cookin-soul-tapas-vol.-2', 'elphomega-el-testimonio-libra', 'mp3-Falsalarma-Playlist', 'ninguna-mujer-tiene-dueno-porque-ella',
+                'rapsusklei-elipsis', 'rapsusklei-curso-basico-de-poesia', 'rapsusklei-hijos-de-puta-para-todo',
+                'rapsusklei-la-historia-mas-real-de-vuestras-vidas', 'perroscallejeros-0', 'FOYONE_El_Patio', 'foyone-la-jaula-de-oro-2015',
+                'fill-black-fill-project-2001', 'quilate-boom-bap-2018', 'rels-change-or-die-2014_202110', 'rels-b-player-hater-2015',
+                'pablic-s.-dj-koo-un-cadaver-exquisito', 'pablic-s.-underdog', 'rapp-gotti-coldwave-subzero', 
+            'lebleu-johnny-doc-rapp-gotti-blue-magic', '17-outro', 'yako-colabos', 'c.-tangana-idolo-2017', 'tego-calderon-el-abayarde_202010', 'tego-calderon-el-abayarde-contraataca', 'tesis-doctoral-album', 'comunicologia-vol.1-album', 'vacaciones-en-el-mar-album',
+            'dos-rombos-mixtape', 'c-tangana-presidente', 'pedro-ladroga-encima-mia-audio-feat-c-tangana-prod-enry-k', 'a.d.r.o.m.i.c.f.m.s-2-mixtape', 'Skydrvg', 'jamendo-100446', 'Nico-Miseria-Tercer-verano-del-amor'],
+            dancehall: ['FULLYACTIVEMIXTAPE', 'Mavado-TheGoodsbestOfMavado2cd', 'dj-s1-dancehall-mix-august-2023', 'VybzKartel-KingOfTheDancehall', 'StrictlyTheBestVol.50', 'dj-wass-dancehall-style-2022', 'DancehallAnthemsVol.1', 'ZJLiquid-FullEnzMixtape', 'dj-dotcom-dancehall-mix-2021', 'DancehallHitsVol.4', 'Dancehall-Foundation-Vol-1', 'ReggaeDancehallMix2020', 'MajorLazer-LazerStrikesBackVol1', 'Popcaan-YiyChangeMixtape', 'Chronixx-RootsAndChalice', 'MajorLazer-PeaceIsTheMission', 'BeenieMan-KingInnaDeDancehall', 'DJ-Puffy-Dancehall-Mix-2019', 'BestOfDancehall2018', 'Dancehall-Explosion-90s', 'VA-DJ_Madbwoy_-_Dancehall_Mixtape_Vol._9-2019', 'throatgoatmixtape', 'summerravept2', 'badgyaljadexshenseeamixtape', 'doveymagnumxspicemixtape', 'skengxalkalinemixtape', 'dancehallbadnessmixtape', 'EXCELBLACKIAMBLESSMIXTAPE', 
+                'MOSTVIEWEDSKENGSONGSMIXTAPE', 'boobastarrskysetting_', 'DJ_Rondon_-_Dancehall_Reggae_Vol._35', 
+                'DJ_Rondon_-_Dancehall_Reggae_77-2011', 'VA-DJ_Cabezon_-_Dancehall_Reggae_Classics-2019', 
+                'AOS_-_Dancehall_Reggae_In_The_Mix_Vol.4', 'VA-DJ_Roy_-_Pull_Up_Dancehall_Mix-2020', 
+                'VA-DJ_Rondon_Presents_Dancehall_Reggae_Vol.652010-', 'VA-DJ_Dredski_-_Still_Lock_Da_Streets_Dancehall_Mix-2013',
+                'DJ_Rondon_-_Vocal_Singing_Reggae_Vol._24_2006-MixFiend'] }; 
+    }
+}
+
+// Ejecutar la carga al abrir la web
+loadExternalDB();
+        
+       async function start(mode) {
+    currentMode = mode;
+    
+    // Si la DB aún no carga y no es el modo 'mixtapes', esperamos un poco
+    if (mode !== 'mixtapes' && (!DB[mode] || DB[mode].length === 0)) {
+        document.body.style.cursor = 'wait';
+        await loadExternalDB();
+        document.body.style.cursor = 'default';
+    }
+
+    document.getElementById('menu').classList.add('hidden');
+    const p = document.getElementById('player');
+    p.style.display = 'block';
+    p.className = 'theme-' + mode;
+    playNext(); 
+}
+
+        async function getNextTrackData() {
+            let id = "";
+            try {
+                if (currentMode === 'mixtapes') {
+                    const randomPage = Math.floor(Math.random() * 500) + 1;
+                    const r = await fetch(`https://archive.org/advancedsearch.php?q=collection:(hiphopmixtapes)+AND+mediatype:(audio)&fl[]=identifier&rows=1&page=${randomPage}&output=json`);
+                    const j = await r.json();
+                    id = j.response.docs[0].identifier;
+                } else {
+                    const l = DB[currentMode];
+                    let pool = l.filter(x => !recentlyPlayed.has(x));
+                    if (pool.length === 0) { recentlyPlayed.clear(); pool = l; }
+                    id = pool[Math.floor(Math.random() * pool.length)];
+                }
+
+                recentlyPlayed.add(id);
+                if (recentlyPlayed.size > MAX_RECENT) recentlyPlayed.delete(recentlyPlayed.values().next().value);
+
+                const res = await fetch(`https://archive.org/metadata/${id}`);
+                const data = await res.json();
+                const mp3s = data.files.filter(f => f.name.toLowerCase().endsWith('.mp3') && !f.name.toLowerCase().includes('vbr') && f.source === 'original');
+
+                if (!mp3s.length) return getNextTrackData();
+
+                const track = mp3s[Math.floor(Math.random() * mp3s.length)];
+                return {
+                    title: (track.title || track.name).toUpperCase().replace(/_/g, ' ').replace('.MP3', ''),
+                    album: (data.metadata.title || "Archive Radio").toUpperCase(),
+                    url: `https://archive.org/download/${id}/${encodeURIComponent(track.name)}`,
+                    cover: `https://archive.org/services/img/${id}`
+                };
+            } catch (e) { return getNextTrackData(); }
+        }
+
+async function playNext() {
+    // Si hay canciones en la cola del álbum, las toca
+    if (isAlbumMode && albumQueue.length > 0) {
+        applyTrack(albumQueue.shift());
+        return;
+    }
+
+    // Si se acaba el álbum o no estábamos en ese modo, vuelve a la radio normal
+    isAlbumMode = false;
+
+    if (nextTrackBuffer) {
+        applyTrack(nextTrackBuffer);
+        nextTrackBuffer = null;
+        prepareBuffer();
+        return;
+    }
+    
+    document.getElementById('title').innerText = "CONECTANDO...";
+    const data = await getNextTrackData();
+    applyTrack(data);
+    prepareBuffer();
+}
+
+        async function prepareBuffer() {
+            nextTrackBuffer = await getNextTrackData();
+        }
+
+        function applyTrack(t) {
+
+            navigator.mediaSession.setActionHandler('nexttrack', playNext);
+            navigator.mediaSession.setActionHandler('previoustrack', playPrev);
+            // Esto mantiene la conexión viva al interactuar con el sistema
+
+            document.getElementById('title').innerText = t.title;
+            document.getElementById('album').innerText = t.album;
+            document.getElementById('cover').src = t.cover;
+            audio.src = t.url;
+            audio.play().catch(e => console.log("Auto-play blocked or error:", e));
+            
+            if (historyIndex === -1 || history[historyIndex].url !== t.url) {
+                history.push(t);
+                historyIndex = history.length - 1;
+            }
+            if ('mediaSession' in navigator) {
+              navigator.mediaSession.metadata = new MediaMetadata({
+                title: t.title,
+                artist: t.album,
+                artwork: [{ src: t.cover, sizes: '512x512', type: 'image/png' }]
+            });
+                navigator.mediaSession.playbackState = "playing";
+        }
+        }
+
+        // --- SOLUCIÓN AL PROBLEMA DEL BOTÓN PLAY/PAUSE ---
+        // Escuchamos directamente al objeto audio para cambiar el icono
+        audio.onplay = () => { pIcon.className = "fas fa-pause"; };
+        audio.onpause = () => { pIcon.className = "fas fa-play"; };
+
+        function toggle() {
+            if (audio.paused) audio.play();
+            else audio.pause();
+        }
+
+        function playPrev() {
+            if (historyIndex > 0) { historyIndex--; applyTrack(history[historyIndex]); }
+        }
+
+        audio.ontimeupdate = () => {
+            if (audio.duration) {
+                seekBar.max = Math.floor(audio.duration);
+                seekBar.value = Math.floor(audio.currentTime);
+                
+                // Cambiamos de 30 a 60 segundos para dar más tiempo al servidor de Archive
+                if (audio.duration - audio.currentTime < 60 && !nextTrackBuffer) {
+                    prepareBuffer();
+                }
+            }
+        };
+
+        seekBar.oninput = () => { audio.currentTime = seekBar.value; };
+        document.getElementById('vol').oninput = (e) => audio.volume = e.target.value;
+     audio.onended = () => {
+    console.log("Canción terminada, saltando...");
+    // Forzamos un estado de reproducción aunque sea silencio para que el sistema no cierre el hilo
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+    }
+    playNext();
+};
+        // Detecta cuando el audio se detiene por falta de datos (Buffer vacío)
+        audio.onstalled = () => {
+            console.warn("Buffer vacío o conexión perdida, intentando re-conectar...");
+            // Pequeño truco: si hay datos cargados pero se paró, intentamos play. 
+            // Si no, forzamos recarga del recurso actual para despertar la conexión.
+            if (audio.readyState >= 2) {
+                audio.play();
+            } else {
+                const currentPos = audio.currentTime;
+                audio.load(); 
+                audio.currentTime = currentPos;
+                audio.play().catch(() => {});
+            }
+        };
+
+        // También es recomendable añadir 'onwaiting' para móviles
+        audio.onwaiting = () => {
+            console.log("Esperando datos del servidor...");
+};
+        audio.onerror = () => {
+            console.log("Error de carga, reintentando...");
+            nextTrackBuffer = null; // Limpiamos buffer corrupto
+            playNext(); // Forzamos el siguiente
+        };
+        // Función para abrir/cerrar el listado
+// Función para abrir/cerrar el listado
+function toggleAlbumList() {
+    const overlay = document.getElementById('album-list-overlay');
+    
+    if (overlay.style.display === 'flex') {
+        overlay.style.display = 'none';
+    } else {
+        overlay.style.display = 'flex';
+        document.getElementById('list-category-title').innerText = "BIBLIOTECA " + currentMode.toUpperCase();
+        // Llamamos a la función de renderizado normal (sin aleatorio de inicio)
+        renderAlbumGrid(false);
+    }
+}
+
+// Nueva función para renderizar la cuadrícula (con opción a random)
+function renderAlbumGrid(isRandom = false) {
+    const grid = document.getElementById('album-grid');
+    grid.innerHTML = '';
+
+    if (currentMode === 'mixtapes') {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #555; padding: 40px;">MODO ALEATORIO GLOBAL ACTIVO</div>';
+        return;
+    }
+
+    let albumsToShow = [...DB[currentMode]];
+    if (isRandom) albumsToShow.sort(() => Math.random() - 0.5);
+    else albumsToShow.reverse();
+
+    albumsToShow.forEach(id => {
+        const item = document.createElement('div');
+        item.className = 'album-item';
+        item.style.position = 'relative'; 
+        
+        let cleanName = id.split('_')[0].replace(/-/g, ' ');
+        
+        item.innerHTML = `
+            <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;">
+                <div style="position: relative;" onclick="selectAlbum('${id}', false)">
+                    <img src="https://archive.org/services/img/${id}" loading="lazy" 
+                         style="display: block; width: 100%;"
+                         onerror="this.src='https://archive.org/services/img/hiphopmixtapes'">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                        <span style="color: white; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 4px;">
+                           <i class="fas fa-shuffle"></i> Play Random
+                        </span>
+                    </div>
+                </div>
+
+                <div onclick="selectAlbum('${id}', true)" 
+                     style="background: var(--gold); color: black; padding: 6px 0; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; border-top: 1px solid rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s;"
+                     onmouseover="this.style.background='#e6c200'" onmouseout="this.style.background='var(--gold)'">
+                     <i class="fas fa-play" style="font-size: 0.6rem; margin-right: 5px;"></i> PLAY FULL ALBUM
+                </div>
+            </div>
+            <span class="album-name" style="margin-top: 8px; display: block;">${cleanName}</span>
+        `;
+        grid.appendChild(item);
+    });
+    grid.scrollTo(0, 0);
+}
+
+// Función para forzar que suene un álbum específico
+async function selectAlbum(id, playFullAlbum = false) {
+    toggleAlbumList(); 
+    document.getElementById('title').innerText = "CARGANDO...";
+    
+    try {
+        const res = await fetch(`https://archive.org/metadata/${id}`);
+        const data = await res.json();
+        const mp3s = data.files.filter(f => f.name.toLowerCase().endsWith('.mp3') && !f.name.toLowerCase().includes('vbr'));
+
+        if (mp3s.length > 0) {
+            if (playFullAlbum) {
+                // MODO ÁLBUM COMPLETO
+                isAlbumMode = true;
+                albumQueue = mp3s.map(track => ({
+                    title: (track.title || track.name).toUpperCase().replace(/_/g, ' ').replace('.MP3', ''),
+                    album: (data.metadata.title || "Archive Radio").toUpperCase(),
+                    url: `https://archive.org/download/${id}/${encodeURIComponent(track.name)}`,
+                    cover: `https://archive.org/services/img/${id}`
+                }));
+                applyTrack(albumQueue.shift());
+            } else {
+                // MODO NORMAL (Una sola canción y sigue la radio)
+                isAlbumMode = false;
+                albumQueue = [];
+                const track = mp3s[Math.floor(Math.random() * mp3s.length)];
+                applyTrack({
+                    title: (track.title || track.name).toUpperCase().replace(/_/g, ' ').replace('.MP3', ''),
+                    album: (data.metadata.title || "Archive Radio").toUpperCase(),
+                    url: `https://archive.org/download/${id}/${encodeURIComponent(track.name)}`,
+                    cover: `https://archive.org/services/img/${id}`
+                });
+                prepareBuffer(); 
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        playNext();
+    }
+}
+    </script>
+<div id="album-list-overlay" onclick="if(event.target === this) toggleAlbumList()">
+    <div class="album-container">
+<div class="list-header">
+    <span id="list-category-title" style="font-weight: bold; font-size: 0.9rem; color: var(--gold); text-transform: uppercase; padding-left: 15px;"></span>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button onclick="renderAlbumGrid(true)" style="background: #222; color: var(--gold); border: 1px solid #444; padding: 8px 12px; border-radius: 6px; font-size: 0.7rem; cursor: pointer;">
+            <i class="fas fa-random"></i> MIX
+        </button>
+        <button onclick="toggleAlbumList()" style="background: #333; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 0.7rem; cursor: pointer;">
+            <i class="fas fa-times"></i> CERRAR
+        </button>
+    </div>
+</div>
+        <div style="text-align: center;">
+            <span style="text-align: center;font-size: 0.8em; ">Haz clic en un álbum para reproducir una de sus canciones
+</span>
+        </div>
+        <div id="album-grid" class="album-grid">
+            </div>
+    </div>
+</div>
+</body>
+</html>
