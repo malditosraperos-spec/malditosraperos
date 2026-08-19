@@ -9,7 +9,7 @@
         :root { --bg: #0a0a0a; --gold: #ffd700; --red: #ff4500; --pink: #f06292; --gray: #888; --green: #2ecc71; }
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; transition: 0.5s; overflow-x: hidden; position: relative; }
         
-        #menu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 95%; max-width: 1000px; padding: 20px; margin: auto; padding-bottom: 60px; }
+        #menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 95%; max-width: 1000px; padding: 20px; margin: auto; padding-bottom: 60px; }
         .card { background: #151515; border: 1px solid #333; border-radius: 12px; padding: 25px; text-align: center; cursor: pointer; transition: 0.3s; }
         .card:hover { transform: translateY(-5px); background: #222; }
         .card i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
@@ -152,11 +152,11 @@
             <i class="fas fa-heart" style="color:var(--pink)"></i>
             <h3>R&B SOUL</h3><small>Smooth Vibes</small>
         </div>
-        <div class="card" onclick="start('tapes')" style="border-bottom: 5px solid #fff">
+        <div class="card" onclick="start('tapes')" style="border-bottom: 5px solid #fff; visibility: hidden">
             <i class="fas fa-tape" style="color:#fff"></i>
             <h3>RAP TAPES ES</h3><small>Rap en español</small>
         </div>
-        <div class="card" onclick="start('dancehall')" style="border-bottom: 5px solid var(--green)">
+        <div class="card" onclick="start('dancehall')" style="border-bottom: 5px solid var(--green); visibility: hidden">
             <i class="fas fa-fire" style="color:var(--green)"></i>
             <h3>DANCEHALL</h3><small>Jamaican Roots</small>
         </div>
