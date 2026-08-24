@@ -170,15 +170,15 @@
     <div id="menu">
         <div class="card" onclick="start('strictly')" style="border-bottom: 5px solid var(--red)">
             <i class="fas fa-record-vinyl" style="color:var(--red)"></i>
-            <h3>STRICTLY RAP</h3><small>Albums & Mixtapes</small>
+            <h3>STRICTLY RAP</h3><small>Albums & Mixtapes USA</small>
         </div>
         <div class="card" onclick="start('beats')" style="border-bottom: 5px solid var(--gray)">
             <i class="fas fa-drum" style="color:var(--gray)"></i>
-            <h3>BEATS RADIO</h3><small>Instrumentals</small>
+            <h3>BEATS RADIO</h3><small>Instrumentales</small>
         </div>
         <div class="card" onclick="start('mixtapes')" style="border-bottom: 5px solid var(--gold)">
             <i class="fas fa-compact-disc" style="color:var(--gold)"></i>
-            <h3>ALL DAY RAPPIN</h3><small>Dat Piff Classics</small>
+            <h3>ALL DAY RAPPIN</h3><small>Dat Piff Mixtapes</small>
         </div>
         <div class="card" onclick="start('rnb')" style="border-bottom: 5px solid var(--pink)">
             <i class="fas fa-heart" style="color:var(--pink)"></i>
@@ -187,7 +187,7 @@
     </div>
 
     <div id="player">
-        <button class="btn-back" onclick="backToMenu()"><i class="fas fa-arrow-left"></i> MENÚ</button>
+        <button class="btn-back" onclick="backToMenu()"><i class="fas fa-arrow-left"></i> Volver atrás</button>
         <div class="cover-box"><img id="cover" src="" alt=""></div>
         <div class="progress-container"><input type="range" id="seek-bar" value="0" min="0" step="1"></div>
         <div class="info">
@@ -231,7 +231,7 @@
         const MAX_RECENT = 20;
 
         let DB = {}; 
-        const GITHUB_DB_URL = "https://raw.githubusercontent.com/jesusviruez/hubradio/refs/heads/v1.1/db.json";
+        const GITHUB_DB_URL = "https://raw.githubusercontent.com/malditosraperos-spec/malditosraperos/refs/heads/main/db.json";
 
         async function loadExternalDB() {
             try {
