@@ -252,21 +252,29 @@
             audio.pause();
         }
 
-        async function start(mode) {
-            currentMode = mode;
-            if (mode !== 'mixtapes' && (!DB[mode] || DB[mode].length === 0)) {
-                document.body.style.cursor = 'wait';
-                await loadExternalDB();
-                document.body.style.cursor = 'default';
-            }
+async function start(mode) {
+    currentMode = mode;
 
-            document.getElementById('menu').classList.add('hidden');
-            document.getElementById('top-bar-container').style.display = 'none';
-            const p = document.getElementById('player');
-            p.style.display = 'block';
-            p.className = 'theme-' + mode;
-            playNext(); 
-        }
+    // --- REINICIAR ESTADOS DE LA EMISORA ANTERIOR ---
+    nextTrackBuffer = null; // Elimina la canción precargada de la emisora anterior
+    albumQueue = [];        // Limpia la cola de reproducción en modo álbum
+    isAlbumMode = false;    // Desactiva el modo álbum
+    recentlyPlayed.clear(); // (Opcional) Limpia las canciones recientes
+    // ------------------------------------------------
+
+    if (mode !== 'mixtapes' && (!DB[mode] || DB[mode].length === 0)) {
+        document.body.style.cursor = 'wait';
+        await loadExternalDB();
+        document.body.style.cursor = 'default';
+    }
+
+    document.getElementById('menu').classList.add('hidden');
+    document.getElementById('top-bar-container').style.display = 'none';
+    const p = document.getElementById('player');
+    p.style.display = 'block';
+    p.className = 'theme-' + mode;
+    playNext(); 
+}
 
         async function getNextTrackData() {
             let id = "";
