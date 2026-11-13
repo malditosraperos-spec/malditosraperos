@@ -750,6 +750,42 @@
             </div>
           </div>
         </section>
+
+        <!-- SECCIÓN DE GESTIÓN DE RADIO ARCHIVE.ORG -->
+<section class="panel" style="margin-top: 30px;">
+    <h2><i class="fas fa-radio"></i> Gestión de Emisoras (Archive.org - Radio)</h2>
+    p class="panel-intro">Añade o elimina identificadores de Archive.org para las distintas categorías de la radio.</p>
+
+    <div class="form-group">
+        <label for="radioCategory">Seleccionar Categoría de Radio</label>
+        <select id="radioCategory" onchange="renderRadioAdminList()">
+            <option value="strictly">Strictly Rap</option>
+            <option value="beats">Beats Radio</option>
+            <option value="rnb">R&B Soul</option>
+            <option value="tapes">All Day Rappin (Tapes)</option>
+            <option value="dancehall">Dancehall</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="newRadioAlbumId">Identificador exacto de Archive.org</label>
+        <div class="input-with-btn">
+            <input type="text" id="newRadioAlbumId" placeholder="Ej: let-god-sort-em-out_20251130">
+            <button type="button" class="btn" onclick="addRadioAlbum()">Añadir a la radio</button>
+        </div>
+    </div>
+
+    <div class="form-group" style="margin-top: 15px;">
+        <label>Álbumes actuales en esta categoría:</label>
+        <input type="text" id="radioSearchFilter" placeholder="Filtrar álbumes..." oninput="renderRadioAdminList()" style="margin-bottom: 10px;">
+        <div class="list-container" id="radioAdminList" style="max-height: 250px; overflow-y: auto; background: #121212; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
+            <!-- Se llena por JavaScript -->
+        </div>
+    </div>
+    <div id="radioStatus" class="status-box"></div>
+</section>
+
+        
       </div>
     </div>
   </div>
@@ -862,7 +898,97 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+
+let radioDB = { strictly: [], beats: [], rnb: [], tapes: [], dancehall: [] };
+
+// Cargar los datos de la radio al iniciar la sesión de admin
+async function loadRadioDB() {
+    try {
+        const docRef = doc(db, "config", "radio");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            radioDB = docSnap.data();
+            renderRadioAdminList();
+        }
+    } catch (e) {
+        console.error("Error al cargar la base de datos de la radio:", e);
+    }
+}
+
+// Llamar a esta función dentro de tu onAuthStateChanged cuando el usuario sea admin
+// (por ejemplo, justo debajo de cuando se muestra el panel de admin)
+// loadRadioDB();
+
+window.renderRadioAdminList = function() {
+    const cat = document.getElementById('radioCategory').value;
+    const filter = (document.getElementById('radioSearchFilter')?.value || '').toLowerCase().trim();
+    const container = document.getElementById('radioAdminList');
+    container.innerHTML = '';
+
+    const items = radioDB[cat] || [];
+    const filtered = items.filter(id => id.toLowerCase().includes(filter));
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 15px;">No hay álbumes en esta categoría.</div>';
+        return;
+    }
+
+    filtered.forEach(id => {
+        const row = document.createElement('div');
+        row.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 8px 12px; margin-bottom: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);";
+        row.innerHTML = `
+            <span style="font-size: 0.9rem; color: var(--text-title); font-family: monospace;">${id}</span>
+            <button type="button" class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="removeRadioAlbum('${cat}', '${id}')">Eliminar</button>
+        `;
+        container.appendChild(row);
+    });
+};
+
+window.addRadioAlbum = async function() {
+    const cat = document.getElementById('radioCategory').value;
+    const input = document.getElementById('newRadioAlbumId');
+    const val = input.value.trim();
+
+    if (!val) {
+        alert("Introduce un identificador de Archive.org válido.");
+        return;
+    }
+
+    if (!radioDB[cat]) radioDB[cat] = [];
+    if (radioDB[cat].includes(val)) {
+        alert("Este álbum ya existe en esta categoría.");
+        return;
+    }
+
+    radioDB[cat].unshift(val); // Añade al principio
+
+    try {
+        const docRef = doc(db, "config", "radio");
+        await updateDoc(docRef, { [cat]: radioDB[cat] });
+        input.value = '';
+        renderRadioAdminList();
+        showStatus('radioStatus', 'Álbum añadido y guardado en Firestore.', 'success');
+    } catch (e) {
+        alert("Error al guardar en Firestore: " + e.message);
+    }
+};
+
+window.removeRadioAlbum = async function(cat, id) {
+    if (!confirm(`¿Seguro que deseas eliminar '${id}' de la categoría ${cat}?`)) return;
+
+    radioDB[cat] = radioDB[cat].filter(item => item !== id);
+
+    try {
+        const docRef = doc(db, "config", "radio");
+        await updateDoc(docRef, { [cat]: radioDB[cat] });
+        renderRadioAdminList();
+        showStatus('radioStatus', 'Álbum eliminado correctamente.', 'success');
+    } catch (e) {
+        alert("Error al actualizar Firestore: " + e.message);
+    }
+};
 
     const firebaseConfig = {
       apiKey: "AIzaSyBXtUHO5_IYEAFk696uBThhd-etduPA0y8",
