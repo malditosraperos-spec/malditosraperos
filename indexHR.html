@@ -217,6 +217,36 @@
     <audio id="audio" preload="auto" crossorigin="anonymous" importance="high"></audio>
 
     <script>
+
+        // Importa getFirestore, doc y getDoc de Firebase (si usas módulos)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// (Asegúrate de mantener tu firebaseConfig existente)
+const db = getFirestore(app);
+
+let DB = {}; 
+
+async function loadExternalDB() {
+    try {
+        const docRef = doc(db, "config", "radio");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            DB = docSnap.data();
+        } else {
+            console.error("No se encontró la configuración de la radio en Firestore.");
+            DB = { strictly: [], beats: [], rnb: [], tapes: [], dancehall: [] };
+        }
+    } catch (e) {
+        console.error("Error cargando la DB desde Firestore:", e);
+        DB = { strictly: [], beats: [], rnb: [], tapes: [], dancehall: [] }; 
+    }
+}
+
+// Ejecutar al iniciar
+loadExternalDB();
+
+        
         let albumQueue = []; 
         let isAlbumMode = false;
         const audio = document.getElementById('audio');
@@ -493,6 +523,8 @@ async function start(mode) {
                 playNext();
             }
         }
+
+        
     </script>
 
     <div id="album-list-overlay" onclick="if(event.target === this) toggleAlbumList()">
@@ -515,4 +547,6 @@ async function start(mode) {
         </div>
     </div>
 </body>
+
+    
 </html>
