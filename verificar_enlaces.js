@@ -1,5 +1,5 @@
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Inicializar Firebase Admin usando las variables de entorno de GitHub Actions
 initializeApp({
@@ -45,8 +45,6 @@ async function verificarYLimpiar() {
                     listaLimpia.push(id);
                 }
             } catch (e) {
-                // Si hay un fallo de red grave al consultar, por seguridad lo eliminamos o lo dejamos según prefieras
-                // Aquí lo marcamos como roto para retirarlo de la lista
                 reporteEliminados[categoria].push(id);
                 cambiosRealizados = true;
                 console.log(`🗑️ Error de red / Eliminado '${id}': ${e.message}`);
