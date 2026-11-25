@@ -230,10 +230,16 @@
     .input-with-btn {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
     
+    .input-with-btn input {
+      flex: 1 1 180px;
+      min-width: 0;
+    }
+
     .input-with-btn .btn-search-helper {
-      padding: 0 12px;
+      padding: 8px 12px;
       font-size: 0.85rem;
       white-space: nowrap;
       background-color: #24344d;
@@ -600,6 +606,7 @@
                 <div class="input-with-btn">
                   <input type="url" id="albumBandcamp" placeholder="https://artista.bandcamp.com/album/...">
                   <button type="button" class="btn btn-secondary btn-search-helper" onclick="helperSearchBandcamp('albumAuthor', 'albumTitleInput')">🔍 Buscar link</button>
+                  <button type="button" id="btnAutofillBandcamp" class="btn btn-secondary btn-search-helper" onclick="autofillFromBandcamp(this)">⚡ Rellenar</button>
                 </div>
               </div>
 
@@ -888,10 +895,145 @@
       "07": "Julio", "08": "Agosto", "09": "Septiembre", "10": "Octubre", "11": "Noviembre", "12": "Diciembre"
     };
 
+    const CORS_PROXIES = [
+      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+    ];
+
+    const MONTHS_EN_TO_NUM = {
+      january: "01", february: "02", march: "03", april: "04",
+      may: "05", june: "06", july: "07", august: "08",
+      september: "09", october: "10", november: "11", december: "12"
+    };
+
     const adminBadge = document.getElementById('adminBadge');
     const authBtn = document.getElementById('authBtn');
     const loginPanel = document.getElementById('loginPanel');
     const adminContainer = document.getElementById('adminContainer');
+
+    async function fetchHtmlWithProxy(targetUrl) {
+      let lastError;
+      for (const buildProxyUrl of CORS_PROXIES) {
+        try {
+          const res = await fetch(buildProxyUrl(targetUrl));
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const html = await res.text();
+          if (html && html.includes("<html")) return html;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      throw lastError || new Error("No se pudo obtener la página mediante proxy CORS.");
+    }
+
+    function parseBandcampHtml(html, originalUrl) {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+
+      const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute("content")?.trim() || "";
+      const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute("content")?.trim() || "";
+      const ogDesc = doc.querySelector('meta[property="og:description"]')?.getAttribute("content")?.trim() || "";
+      const pageTitle = doc.querySelector("title")?.textContent?.trim() || "";
+
+      let title = "";
+      let author = "";
+      const rawTitle = ogTitle || pageTitle;
+      const byMatch = rawTitle.match(/^(.+?),\s*by\s+(.+?)(?:\s*\|\s*Bandcamp)?$/i);
+
+      if (byMatch) {
+        title = byMatch[1].trim();
+        author = byMatch[2].trim();
+      } else {
+        title = doc.querySelector("#name-section .trackTitle")?.textContent?.trim() || rawTitle;
+        author = doc.querySelector("#name-section h3 a")?.textContent?.trim() || "";
+      }
+
+      let year = "";
+      let month = "";
+      const bodyText = doc.body?.textContent || "";
+      const dateSource = `${ogDesc} ${bodyText}`;
+      const dateMatch = dateSource.match(
+        /released\s+(?:(\d{1,2})\s+)?(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i
+      );
+
+      if (dateMatch) {
+        month = MONTHS_EN_TO_NUM[dateMatch[2].toLowerCase()] || "";
+        year = dateMatch[3];
+      } else {
+        const yearOnlyMatch = dateSource.match(/released\s+.*?\b(19\d{2}|20\d{2})\b/i);
+        if (yearOnlyMatch) year = yearOnlyMatch[1];
+      }
+
+      let cleanUrl = originalUrl;
+      try {
+        const u = new URL(originalUrl);
+        u.search = "";
+        cleanUrl = u.toString();
+      } catch (_) {}
+
+      return {
+        bandcamp: cleanUrl,
+        author,
+        title,
+        cover: ogImage,
+        year,
+        month
+      };
+    }
+
+    window.autofillFromBandcamp = async function(btn) {
+      if (!userLoggedIn) return;
+
+      const input = document.getElementById("albumBandcamp");
+      const rawUrl = (input?.value || "").trim();
+
+      if (!rawUrl || !rawUrl.startsWith("http")) {
+        showStatus("formStatus", "Introduce primero una URL válida de Bandcamp.", "error");
+        return;
+      }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "⏳ Leyendo...";
+      showStatus("formStatus", "", "");
+
+      try {
+        const html = await fetchHtmlWithProxy(rawUrl);
+        const data = parseBandcampHtml(html, rawUrl);
+
+        if (data.bandcamp) document.getElementById("albumBandcamp").value = data.bandcamp;
+        if (data.author) document.getElementById("albumAuthor").value = data.author;
+        if (data.title) document.getElementById("albumTitleInput").value = data.title;
+        if (data.cover) document.getElementById("albumCover").value = data.cover;
+        if (data.year) document.getElementById("albumReleaseYear").value = data.year;
+        if (data.month) document.getElementById("albumReleaseMonth").value = data.month;
+
+        const missing = [];
+        if (!data.author) missing.push("autor");
+        if (!data.title) missing.push("título");
+        if (!data.cover) missing.push("portada");
+        if (!data.year || !data.month) missing.push("fecha");
+
+        if (missing.length === 0) {
+          showStatus("formStatus", "Datos de Bandcamp rellenados. Revísalos antes de guardar.", "success");
+        } else {
+          showStatus(
+            "formStatus",
+            `Rellenado parcial. Revisa o completa manualmente: ${missing.join(", ")}.`,
+            "success"
+          );
+        }
+      } catch (err) {
+        console.error("Error autocompletando desde Bandcamp:", err);
+        showStatus(
+          "formStatus",
+          "No se pudieron leer los datos de Bandcamp vía proxy CORS. Inténtalo de nuevo o rellénalos a mano.",
+          "error"
+        );
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    };
 
     // Sistema de Pestañas
     window.switchTab = function(tabId, btnElement) {
@@ -909,7 +1051,6 @@
         if (docSnap.exists()) {
           radioDB = docSnap.data();
         } else {
-          // Si aún no existe el documento, lo crea vacío
           await setDoc(docRef, radioDB);
         }
         renderRadioList();
@@ -974,7 +1115,6 @@
         showStatus('radioFormStatus', 'Álbum añadido y guardado en Firestore correctamente.', 'success');
         renderRadioList();
       } catch (e) {
-        // Si falló por no existir el documento, usamos setDoc con merge
         try {
           await setDoc(doc(db, "config", "radio"), { [cat]: radioDB[cat] }, { merge: true });
           input.value = '';
@@ -1099,7 +1239,6 @@
         loginPanel.classList.add('hidden');
         adminContainer.classList.remove('hidden');
         
-        // Cargamos la base de datos de la radio desde Firestore al entrar
         loadRadioDB();
       } else {
         authBtn.innerText = 'Login admin';
