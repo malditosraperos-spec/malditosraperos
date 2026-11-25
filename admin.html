@@ -896,9 +896,8 @@
     };
 
     const CORS_PROXIES = [
-      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
-    ];
+  (url) => `/.netlify/functions/bandcamp?url=${encodeURIComponent(url)}`
+];
 
     const MONTHS_EN_TO_NUM = {
       january: "01", february: "02", march: "03", april: "04",
